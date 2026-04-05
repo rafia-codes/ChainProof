@@ -6,7 +6,6 @@ contract Verification{
 
     struct Certificate{
         string certificateId;
-        address student;
         address issuer;
         string cid;
         bytes32 hash;
@@ -30,16 +29,20 @@ contract Verification{
         approvedIssuer[issuer] = true;
     }
 
+
     function unapproveIssuer(address issuer) public onlyOwner(){
         delete approvedIssuer[issuer];
     }
 
-    function issueCertificate(string calldata certificateId,address student,bytes32 hash,string cid) public{
+    function issuerStatus(address issuer) public view returns(bool){
+        return approvedIssuer[issuer];
+    }
+
+    function issueCertificate(string calldata certificateId,bytes32 hash,string calldata cid) public{
         require (issuedCertificates[certificateId].timestamp == 0,"Certificate already issued");
         require(approvedIssuer[msg.sender] ,"Not approved Issuer");
         issuedCertificates[certificateId] = Certificate({
             certificateId : certificateId,
-            student : student,
             issuer : msg.sender,
             cid : cid,
             hash : hash,
@@ -47,7 +50,7 @@ contract Verification{
         });
     }
 
-    function getCertificate(string certificateId) public view returns (Certificate memory){
+    function getCertificate(string calldata certificateId) public view returns (Certificate memory){
         if(issuedCertificates[certificateId].timestamp != 0)
             return issuedCertificates[certificateId];
         else 

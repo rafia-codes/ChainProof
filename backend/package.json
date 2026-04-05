@@ -11,6 +11,9 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "fastify": "^5.8.4"
+    "@fastify/multipart": "^9.4.0",
+    "ethers": "^6.16.0",
+    "fastify": "^5.8.4",
+    "pinata": "^2.5.5"
   }
 }
