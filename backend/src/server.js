@@ -12,10 +12,6 @@ fastify.register(certificateRouter,{
     prefix: '/certificate'
 });
 
-fastify.get('/',(request,reply)=>{
-    
-})
-
 const start = async () => {
     try {
         await fastify.listen({port:3000});

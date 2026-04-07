@@ -10,9 +10,10 @@ function certificateRouter(fastify,opts) {
         reply.send(res);
     });
 
-    fastify.get('/verify/:certificateID',(request,reply)=>{
-        const certificateId = request.params['certificateID'];
-
+    fastify.get('/verify/:certificateID',async (request,reply)=>{
+        const certificateId = request.params.certificateID;
+        const file = await request.file();
+        const cert = await service.verify({certificateId,file});
     })
 }
 

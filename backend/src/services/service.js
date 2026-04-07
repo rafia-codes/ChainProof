@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { PinataSDK } from 'pinata';
+import { issueOnChain } from './blockchain';
 
 const pinata = new PinataSDK({
     pinataJwt: process.env.PINATA_JWT,
@@ -20,8 +21,11 @@ console.log(cid);
 
 //store on blockchain
 
-return {hash,cid};
-}
+const { txnHash } = await issueOnChain(certificateId,"0x"+hash,cid);
+
+return {hash,cid,txnHash};
+
+};
 
 
 export const  verify = async({certificateId,file}) => {
