@@ -4,7 +4,7 @@ import 'dotenv/config';
 
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY,provider);
+const wallet = new ethers.Wallet(process.env.PRIVATE_KEY,provider);//will take from user itself only
 
 const abi = [
     "function approveIssuer(address issuer) public onlyOwner()",
@@ -23,6 +23,7 @@ export const issueOnChain = async(certificateId, hash, cid) => {
      return { success: true, txnHash: txn.hash};
     } catch (error) {
         console.error("Blockchain issue error:",error);
+        return { success: false};
     }
 }
 
@@ -38,5 +39,35 @@ export const getCertificateFromChain = async(certificateId) => {
        }
     } catch (error) {
         return null;
+    }
+}
+
+export const approveIssuer = async(walletAddress) => {
+    try {
+        await contract.approveIssuer(walletAddress);
+        return {success: true};
+    } catch (error) {
+        console.log(error);
+        return { success: false};
+    }
+}
+
+export const unapproveIssuer = async(walletAddress) => {
+    try {
+        await contract.unapproveIssuer(walletAddress);
+        return {success: true};
+    } catch (error) {
+        console.log(error);
+        return { success: false};
+    }
+}
+
+export const issuerStatus = async(walletAddress) => {
+    try {
+        await contract.issuerStatus(walletAddress);
+        return {success: true};
+    } catch (error) {
+        console.log(error);
+        return { success: false};
     }
 }

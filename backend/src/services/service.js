@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { PinataSDK } from 'pinata';
-import { issueOnChain } from './blockchain';
+import { approveIssuer, getCertificateFromChain, issueOnChain, issuerStatus, unapproveIssuer } from './blockchain';
 
 const pinata = new PinataSDK({
     pinataJwt: process.env.PINATA_JWT,
@@ -28,6 +28,36 @@ return {hash,cid,txnHash};
 };
 
 
-export const  verify = async({certificateId,file}) => {
-    
+export const  verify = async({certificateId}) => {
+    if(!certificateId)
+        return "Please provide information to fetch the certificate.";
+
+    const cert = await getCertificateFromChain(certificateId);
+
+    return cert;
+}
+
+
+export const  approve = async({walletAddress}) => {
+    if(!walletAddress)
+        return "Connect your wallet first and sign a message";
+
+    const res = await approveIssuer(walletAddress); 
+    return res;
+}
+
+export const  unapprove = async({walletAddress}) => {
+    if(!walletAddress)
+        return "Connect your wallet first and sign a message";
+
+    const res = await unapproveIssuer(walletAddress); 
+    return res;
+}
+
+export const  status = async({walletAddress}) => {
+    if(!walletAddress)
+        return "Connect your wallet first and sign a message";
+
+    const res = await issuerStatus(walletAddress); 
+    return res;
 }
