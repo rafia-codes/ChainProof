@@ -11,7 +11,8 @@ const abi = [
     "function unapproveIssuer(address issuer) public onlyOwner()",
     "function issuerStatus(address issuer) public view returns(bool)",
     "function issueCertificate(string calldata certificateId,bytes32 hash,string calldata cid) public",
-    "function getCertificate(string calldata certificateId) public view returns (Certificate memory)"
+    "function getCertificate(string calldata certificateId) public view returns (Certificate memory)",
+    "function revokeCertificate(string calldata certificateId) public"
 ];
 
 const contract = new Contract(process.env.CONTRACT_ADDRESS,abi,wallet);
@@ -42,6 +43,18 @@ export const getCertificateFromChain = async(certificateId) => {
     }
 }
 
+export const revokeOnChain = async (certificateId) => {
+    try {
+        const txn = await contract.revokeCertificate(certificateId);
+        await txn.wait();
+
+        return { success: true, txnHash: txn.hash };
+    } catch (error) {
+        console.error("Revoke error:", error);
+        return { success: false };
+    }
+}
+
 export const approveIssuer = async(walletAddress) => {
     try {
         await contract.approveIssuer(walletAddress);
@@ -62,12 +75,12 @@ export const unapproveIssuer = async(walletAddress) => {
     }
 }
 
-export const issuerStatus = async(walletAddress) => {
+export const issuerStatus = async (walletAddress) => {
     try {
-        await contract.issuerStatus(walletAddress);
-        return {success: true};
+        const status = await contract.issuerStatus(walletAddress);
+        return { success: true, approved: status };
     } catch (error) {
         console.log(error);
-        return { success: false};
+        return { success: false };
     }
 }

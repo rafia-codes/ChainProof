@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const issuerSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
     wallet:{
         type: String,
         required: true,

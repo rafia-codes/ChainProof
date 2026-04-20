@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { PinataSDK } from 'pinata';
-import { approveIssuer, getCertificateFromChain, issueOnChain, issuerStatus, unapproveIssuer } from './blockchain';
+import { approveIssuer, getCertificateFromChain, issueOnChain, issuerStatus, unapproveIssuer, revokeOnChain } from './blockchain';
 
 const pinata = new PinataSDK({
     pinataJwt: process.env.PINATA_JWT,
@@ -28,14 +28,26 @@ return {hash,cid,txnHash};
 };
 
 
-export const  verify = async({certificateId}) => {
-    if(!certificateId)
-        return "Please provide information to fetch the certificate.";
-
+export const verify = async ({ certificateId }) => {
+    if (!certificateId)
+        return null;
     const cert = await getCertificateFromChain(certificateId);
+    if (!cert)
+        return null;
 
-    return cert;
-}
+    return {
+        ...cert,
+        isRevoked: cert.isRevoked
+    };
+};
+
+export const revoke = async ({ certificateId }) => {
+    if (!certificateId)
+        return { success: false };
+
+    const res = await revokeOnChain(certificateId);
+    return res;
+};
 
 
 export const  approve = async({walletAddress}) => {
