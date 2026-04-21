@@ -1,29 +1,32 @@
-import { Issuer } from '../models/Issuer';
 import { verifySignature } from '../utils/verifySignature';
-import { issue,verify,revoke } from '../services/service';
+import { issue,verify,revoke,status } from '../services/service';
 
 function certificateRouter(fastify,opts) {
+
+
     fastify.post('/issue', async (request, reply) => {
     const certificateId = request.body.certificateID;
     const file = await request.file();
-    const { message, signature } = request.body;
+    const { wallet, signature, nonce } = request.body;
 
-    if (!message || !signature)
-        return reply.code(403).send({ message: "Signature required" });
+    if (!wallet || !signature || !nonce)
+        return reply.code(403).send({ message: "Auth required" });
 
-    const wallet = verifySignature(message, signature);
+    const verifiedWallet = await verifySignature(wallet,signature,nonce);
 
-    if (!wallet)
+    if (!verifiedWallet)
         return reply.code(403).send({ message: "Invalid signature" });
 
-    const status = await issuerStatus(wallet);
+    const issuerCheck = await status(verifiedWallet);
 
-    if (!status.success || !status.approved)
+    if (!issuerCheck.success || !issuerCheck.approved)
         return reply.code(403).send({ message: "Not an approved issuer" });
 
-    const res = await issue({ wallet, certificateId, file });
+    const res = await issue({ wallet:verifiedWallet, certificateId, file });
     return reply.send(res);
     });
+
+
 
     fastify.get('/verify/:certificateID',async (request,reply)=>{
         const certificateId = request.params.certificateID;
@@ -32,12 +35,18 @@ function certificateRouter(fastify,opts) {
         return reply.send(cert);
     });
 
+
+
+
     fastify.post('/revoke', async (request, reply) => {
-    const { certificateID, message, signature } = request.body;
+    const { certificateID, wallet, signature, nonce } = request.body;
 
-    const wallet = verifySignature(message, signature);
+    if (!wallet || !signature || !nonce || !certificateID)
+        return reply.code(403).send({ message: "Auth required" });
 
-    if (!wallet)
+    const verifiedWallet = await verifySignature(wallet, signature, nonce);
+
+    if (!verifiedWallet)
         return reply.code(403).send({ message: "Invalid signature" });
 
     const res = await revoke({ certificateId: certificateID });
@@ -48,7 +57,7 @@ function certificateRouter(fastify,opts) {
     return reply.send({
         message: "Certificate revoked",
         txnHash: res.txnHash
-    });
+        });
     });
 }
 
