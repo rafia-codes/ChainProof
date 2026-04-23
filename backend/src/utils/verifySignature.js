@@ -1,15 +1,12 @@
 import { ethers } from "ethers";
 import { Nonce } from "../models/Nonce";
 
-export const verifySignature = (wallet, signature, nonce) => {
+export const verifySignature =async ( signature, nonce) => {
     try {
-        const message = `Verify identity: ${Nonce}`;
+        const message = `Verify identity: ${nonce}`;
         const recovered = ethers.verifyMessage(message, signature);
-        
-        if(recovered.toLowerCase() !==  wallet.toLowerCase())
-            return null;
 
-        const record = await Nonce.findOne({wallet});
+        const record = await Nonce.findOne({wallet:recovered});
 
         if(!record || record.nonce != nonce || record.used)
             return null;
@@ -17,7 +14,7 @@ export const verifySignature = (wallet, signature, nonce) => {
         record.used = true;
         await record.save();
 
-        return wallet;
+        return recovered;
     } catch (error) {
         return null;
     }

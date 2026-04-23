@@ -59,10 +59,10 @@ contract Verification{
             revert("Certficate not found");
     }
 
-    function revokeCertificate(string calldata certificateId)public returns (Certificate memory){
-         require (issuedCertificates[certificateId].timestamp != 0,"No such certificate found");
-         require(issuedCertificates[certificateId].issuer == msg.sender,"Only issuer can revoke the certificate);
-         require(!issuedCertificates[certificateId].isRevoked,"Already revoked");
-         issuedCertificates[certificateId].isRevoked = true;
+    function revokeCertificate(string calldata certificateId) public {
+    require(issuedCertificates[certificateId].timestamp != 0, "No such certificate found");
+    require(issuedCertificates[certificateId].issuer == msg.sender, "Only issuer can revoke the certificate");
+    require(!issuedCertificates[certificateId].isRevoked, "Already revoked");
+    issuedCertificates[certificateId].isRevoked = true;
     }
 }

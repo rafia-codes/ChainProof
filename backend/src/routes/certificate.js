@@ -1,64 +1,42 @@
-import { verifySignature } from '../utils/verifySignature';
-import { issue,verify,revoke,status } from '../services/service';
+import { verifySignature } from "../utils/verifySignature";
+import { issue, verify, status } from "../services/service";
 
-function certificateRouter(fastify,opts) {
-
-
-    fastify.post('/issue', async (request, reply) => {
-    const certificateId = request.body.certificateID;
+function certificateRouter(fastify, opts) {
+  fastify.post("/issue", async (request, reply) => {
     const file = await request.file();
-    const { wallet, signature, nonce } = request.body;
 
-    if (!wallet || !signature || !nonce)
-        return reply.code(403).send({ message: "Auth required" });
+    const certificateId = file.fields.certificateID?.value;
+    const student = file.fields.studentname?.value;
+    const signature = file.fields.signature?.value;
+    const nonce = file.fields.nonce?.value;
 
-    const verifiedWallet = await verifySignature(wallet,signature,nonce);
+    if (!signature || !nonce)
+      return reply.code(403).send({ message: "Auth required" });
+
+    const verifiedWallet = await verifySignature(signature, nonce);
 
     if (!verifiedWallet)
-        return reply.code(403).send({ message: "Invalid signature" });
-
+      return reply.code(403).send({ message: "Invalid signature" });
+    
     const issuerCheck = await status(verifiedWallet);
 
     if (!issuerCheck.success || !issuerCheck.approved)
-        return reply.code(403).send({ message: "Not an approved issuer" });
+      return reply.code(403).send({ message: "Not an approved issuer" });
 
-    const res = await issue({ wallet:verifiedWallet, certificateId, file });
+    const res = await issue({
+      wallet: verifiedWallet,
+      certificateId,
+      file,
+      student_name: student,
+    });
     return reply.send(res);
-    });
+  });
 
-
-
-    fastify.get('/verify/:certificateID',async (request,reply)=>{
-        const certificateId = request.params.certificateID;
-        //const file = await request.file();
-        const cert = await verify({certificateId});
-        return reply.send(cert);
-    });
-
-
-
-
-    fastify.post('/revoke', async (request, reply) => {
-    const { certificateID, wallet, signature, nonce } = request.body;
-
-    if (!wallet || !signature || !nonce || !certificateID)
-        return reply.code(403).send({ message: "Auth required" });
-
-    const verifiedWallet = await verifySignature(wallet, signature, nonce);
-
-    if (!verifiedWallet)
-        return reply.code(403).send({ message: "Invalid signature" });
-
-    const res = await revoke({ certificateId: certificateID });
-
-    if (!res.success)
-        return reply.code(400).send({ message: "Revoke failed" });
-
-    return reply.send({
-        message: "Certificate revoked",
-        txnHash: res.txnHash
-        });
-    });
+  fastify.get("/verify/:certificateID", async (request, reply) => {
+    const certificateId = request.params.certificateID;
+    const cert = await verify({ certificateId });
+    return reply.send(cert);
+  });
 }
 
 export default certificateRouter;

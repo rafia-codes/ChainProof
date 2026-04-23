@@ -12,9 +12,11 @@
   "type": "module",
   "dependencies": {
     "@fastify/multipart": "^9.4.0",
+    "axios": "^1.15.2",
     "dotenv": "^17.4.1",
     "ethers": "^6.16.0",
     "fastify": "^5.8.4",
+    "form-data": "^4.0.5",
     "mongoose": "^9.4.1",
     "pinata": "^2.5.5"
   }

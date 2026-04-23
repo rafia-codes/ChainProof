@@ -7,26 +7,13 @@ const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY,provider);//will take from user itself only
 
 const abi = [
-    "function approveIssuer(address issuer) public onlyOwner()",
-    "function unapproveIssuer(address issuer) public onlyOwner()",
+    "function approveIssuer(address issuer) public",
+    "function unapproveIssuer(address issuer) public",
     "function issuerStatus(address issuer) public view returns(bool)",
-    "function issueCertificate(string calldata certificateId,bytes32 hash,string calldata cid) public",
     "function getCertificate(string calldata certificateId) public view returns (Certificate memory)",
-    "function revokeCertificate(string calldata certificateId) public"
 ];
 
 const contract = new Contract(process.env.CONTRACT_ADDRESS,abi,wallet);
-
-export const issueOnChain = async(certificateId, hash, cid) => {
-    try {
-     const txn = await contract.issueCertificate(certificateId,hash,cid);
-     await txn.wait();
-     return { success: true, txnHash: txn.hash};
-    } catch (error) {
-        console.error("Blockchain issue error:",error);
-        return { success: false};
-    }
-}
 
 export const getCertificateFromChain = async(certificateId) => {
     try {
@@ -43,21 +30,10 @@ export const getCertificateFromChain = async(certificateId) => {
     }
 }
 
-export const revokeOnChain = async (certificateId) => {
-    try {
-        const txn = await contract.revokeCertificate(certificateId);
-        await txn.wait();
-
-        return { success: true, txnHash: txn.hash };
-    } catch (error) {
-        console.error("Revoke error:", error);
-        return { success: false };
-    }
-}
-
 export const approveIssuer = async(walletAddress) => {
     try {
-        await contract.approveIssuer(walletAddress);
+        const txn = await contract.approveIssuer(walletAddress);
+        await txn.wait();
         return {success: true};
     } catch (error) {
         console.log(error);
@@ -67,7 +43,8 @@ export const approveIssuer = async(walletAddress) => {
 
 export const unapproveIssuer = async(walletAddress) => {
     try {
-        await contract.unapproveIssuer(walletAddress);
+        const txn = await contract.unapproveIssuer(walletAddress);
+        await txn.wait();
         return {success: true};
     } catch (error) {
         console.log(error);

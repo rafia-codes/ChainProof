@@ -1,16 +1,41 @@
 import crypto from 'node:crypto';
 import { PinataSDK } from 'pinata';
-import { approveIssuer, getCertificateFromChain, issueOnChain, issuerStatus, unapproveIssuer, revokeOnChain } from './blockchain';
+import { approveIssuer, getCertificateFromChain, issuerStatus, unapproveIssuer } from './blockchain';
+import axios from "axios";
+import FormData from "form-data";
+import Issuer from '../models/Issuer';
 
 const pinata = new PinataSDK({
     pinataJwt: process.env.PINATA_JWT,
     pinataGateway: process.env.PINATA_GATEWAY
 });
 
-export const issue = async({wallet,certificateId,file}) => {
-//generate hash
+export const issue = async({wallet,certificateId,file,student_name}) => {
+const issuer = await Issuer.findOne({wallet});
 
+//ocr-check
 const fileBuffer = await file.toBuffer();
+const formData = new FormData();
+
+formData.append("file",fileBuffer,{
+    filename: file.filename,
+    contentType: file.mimetype
+});
+formData.append("student_name",student_name);
+formData.append("issuer_org",issuer.name);
+
+const ocrResponse = await axios.post(`${process.env.OCR_SERVICE_URL}/validate`,formData,{
+    headers: formData.getHeaders()
+});
+if (!ocrResponse.data.valid) {
+    return {
+        success: false,
+        reason: "Certificate validation failed",
+        mismatches: ocrResponse.data.mismatches
+    };
+}
+
+//generate hash
 const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
 //upload on ipfs -> get cid
@@ -19,11 +44,10 @@ const upload = await pinata.upload.public.file(fileBuffer);
 const cid = upload.cid;
 console.log(cid);
 
-//store on blockchain
+//store on blockchain on frontend
+//const { txnHash } = await issueOnChain(certificateId,"0x"+hash,cid);
 
-const { txnHash } = await issueOnChain(certificateId,"0x"+hash,cid);
-
-return {hash,cid,txnHash};
+return {success:true,hash,cid};
 
 };
 
@@ -40,15 +64,6 @@ export const verify = async ({ certificateId }) => {
         isRevoked: cert.isRevoked
     };
 };
-
-export const revoke = async ({ certificateId }) => {
-    if (!certificateId)
-        return { success: false };
-
-    const res = await revokeOnChain(certificateId);
-    return res;
-};
-
 
 export const  approve = async({walletAddress}) => {
     if(!walletAddress)

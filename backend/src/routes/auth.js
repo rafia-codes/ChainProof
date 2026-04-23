@@ -10,12 +10,9 @@ function authRouter(fastify,opts){
 
         const nonce = crypto.randomBytes(16).toString('hex');
 
-        await Nonce.findOneAndUpdate({
+        await Nonce.create({
             wallet,
             nonce,
-            used: false,
-        },{
-            upsert: true
         });
 
         return reply.send({nonce});
