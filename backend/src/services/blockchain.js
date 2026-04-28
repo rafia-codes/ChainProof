@@ -10,7 +10,7 @@ const abi = [
     "function approveIssuer(address issuer) public",
     "function unapproveIssuer(address issuer) public",
     "function issuerStatus(address issuer) public view returns(bool)",
-    "function getCertificate(string calldata certificateId) public view returns (Certificate memory)",
+    "function getCertificate(string certificateId) view returns (tuple(string certificateId, address issuer, string cid, bytes32 hash, uint256 timestamp, bool isRevoked))"
 ];
 
 const contract = new Contract(process.env.CONTRACT_ADDRESS,abi,wallet);
@@ -54,6 +54,7 @@ export const unapproveIssuer = async(walletAddress) => {
 
 export const issuerStatus = async (walletAddress) => {
     try {
+        console.log('inside blockchain');
         const status = await contract.issuerStatus(walletAddress);
         return { success: true, approved: status };
     } catch (error) {

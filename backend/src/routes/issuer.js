@@ -1,10 +1,10 @@
-import { Issuer } from "../models/Issuer";
-import { approve, unapprove, status } from "../services/service";
+import { Issuer } from "../models/Issuer.js";
+import { approve, unapprove, status } from "../services/service.js";
 
 function issuerRouter(fastify, opts) {
   fastify.get("/status/:wallet", async (request, reply) => {
     const wallet = request.params.wallet;
-    const res = await service.status({ walletAddress: wallet });
+    const res = await status({ walletAddress: wallet });
     reply.send(res);
   });
 
@@ -14,13 +14,13 @@ function issuerRouter(fastify, opts) {
       return reply.code(400).send({ message: "Wallet and name required" });
     const existing = await Issuer.findOne({ wallet });
     if (existing) return reply.send({ message: "Already requested" });
-    const issuer = await Issuer.create({ wallet,name });
+    const issuer = await Issuer.create({ wallet, name });
     return reply.send({ message: "Request submitted", issuer });
   });
 
   fastify.post("/approve", async (request, reply) => {
     const wallet = request.body.wallet;
-    const res = await service.approve({ walletAddress: wallet });
+    const res = await approve({ walletAddress: wallet });
     if (!res?.success)
       return reply.send({ message: "Blockchain approval failed" });
     const issuer = await Issuer.findOne({ wallet });
@@ -32,7 +32,7 @@ function issuerRouter(fastify, opts) {
 
   fastify.post("/unapprove", async (request, reply) => {
     const wallet = request.body.wallet;
-    const res = await service.unapprove({ walletAddress: wallet });
+    const res = await unapprove({ walletAddress: wallet });
     if (!res?.success)
       return reply.send({ message: "Blockchain unapprove failed" });
     const issuer = await Issuer.findOne({ wallet });
@@ -40,6 +40,24 @@ function issuerRouter(fastify, opts) {
     issuer.approved = false;
     await issuer.save();
     return reply.send({ message: "Issuer unapproved" });
+  });
+
+  fastify.get("/pending", async (request, reply) => {
+    console.log('hitting');
+    const pending = await Issuer.find({ approved: false });
+    return reply.send(pending);
+  });
+
+  fastify.get("/approved", async (request, reply) => {
+    console.log('hitting');
+    const approved = await Issuer.find({ approved: true });
+    return reply.send(approved);
+  });
+
+  fastify.get("/check/:wallet", async (request, reply) => {
+    const wallet = request.params.wallet;
+    const issuer = await Issuer.findOne({ wallet });
+    return reply.send({ exists: !!issuer });
   });
 }
 
